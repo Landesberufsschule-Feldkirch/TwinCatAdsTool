@@ -23,42 +23,42 @@ namespace TwinCatAdsTool.Gui.ViewModels
 {
     public class CompareViewModel : ViewModelBase
     {
-        private readonly Subject<string> leftTextSubject = new Subject<string>();
-        private readonly Subject<string> rightTextSubject = new Subject<string>();
-        private readonly IClientService clientService;
-        private readonly SideBySideDiffBuilder comparisonBuilder = new SideBySideDiffBuilder(new Differ());
-        private SideBySideDiffModel comparisonModel = new SideBySideDiffModel();
-        private IEnumerable<ListBoxItem> leftBoxText;
-        private readonly IPersistentVariableService persistentVariableService;
-        private IEnumerable<ListBoxItem> rightBoxText;
-        private string sourceLeft;
-        private string sourceRight;
+        private readonly Subject<string> _leftTextSubject = new Subject<string>();
+        private readonly Subject<string> _rightTextSubject = new Subject<string>();
+        private readonly IClientService _clientService;
+        private readonly SideBySideDiffBuilder _comparisonBuilder = new SideBySideDiffBuilder(new Differ());
+        private SideBySideDiffModel _comparisonModel = new SideBySideDiffModel();
+        private IEnumerable<ListBoxItem> _leftBoxText;
+        private readonly IPersistentVariableService _persistentVariableService;
+        private IEnumerable<ListBoxItem> _rightBoxText;
+        private string _sourceLeft;
+        private string _sourceRight;
 
         public CompareViewModel(IClientService clientService, IPersistentVariableService persistentVariableService)
         {
-            this.clientService = clientService;
-            this.persistentVariableService = persistentVariableService;
+            _clientService = clientService;
+            _persistentVariableService = persistentVariableService;
         }
 
         public IEnumerable<ListBoxItem> LeftBoxText
         {
             get
             {
-                if (leftBoxText == null)
+                if (_leftBoxText == null)
                 {
-                    leftBoxText = new List<ListBoxItem>();
+                    _leftBoxText = new List<ListBoxItem>();
                 }
 
-                return leftBoxText;
+                return _leftBoxText;
             }
             set
             {
-                if (value == leftBoxText)
+                if (value == _leftBoxText)
                 {
                     return;
                 }
 
-                leftBoxText = value;
+                _leftBoxText = value;
                 raisePropertyChanged();
             }
         }
@@ -67,20 +67,20 @@ namespace TwinCatAdsTool.Gui.ViewModels
         {
             get
             {
-                if (sourceLeft == null)
+                if (_sourceLeft == null)
                 {
-                    sourceLeft = "";
+                    _sourceLeft = "";
                 }
 
-                return sourceLeft;
+                return _sourceLeft;
             } set
             {
-                if (value == sourceLeft)
+                if (value == _sourceLeft)
                 {
                     return;
                 }
 
-                sourceLeft = value;
+                _sourceLeft = value;
                 raisePropertyChanged();
             }
         }
@@ -89,20 +89,20 @@ namespace TwinCatAdsTool.Gui.ViewModels
         {
             get
             {
-                if (sourceRight == null)
+                if (_sourceRight == null)
                 {
-                    sourceRight = "";
+                    _sourceRight = "";
                 }
 
-                return sourceRight;
+                return _sourceRight;
             } set
             {
-                if (value == sourceRight)
+                if (value == _sourceRight)
                 {
                     return;
                 }
 
-                sourceRight = value;
+                _sourceRight = value;
                 raisePropertyChanged();
             }
         }
@@ -118,17 +118,17 @@ namespace TwinCatAdsTool.Gui.ViewModels
         {
             get
             {
-                if (rightBoxText == null)
+                if (_rightBoxText == null)
                 {
-                    rightBoxText = new List<ListBoxItem>();
+                    _rightBoxText = new List<ListBoxItem>();
                 }
 
-                return rightBoxText;
+                return _rightBoxText;
             }
             set
             {
-                if (value == rightBoxText) return;
-                rightBoxText = value;
+                if (value == _rightBoxText) return;
+                _rightBoxText = value;
                 raisePropertyChanged();
             }
         }
@@ -136,9 +136,9 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public override void Init()
         {
-            var x = leftTextSubject.StartWith("")
-                .CombineLatest(rightTextSubject.StartWith(""),
-                               (l, r) => comparisonModel = GenerateDiffModel(l, r));
+            var x = _leftTextSubject.StartWith("")
+                .CombineLatest(_rightTextSubject.StartWith(""),
+                               (l, r) => _comparisonModel = GenerateDiffModel(l, r));
 
             x.ObserveOnDispatcher()
                 .Retry()
@@ -151,7 +151,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
         private void AssignCommands()
         {
             ReadLeft = ReactiveCommand.CreateFromTask(ReadVariablesLeft,
-                    canExecute: clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
+                    _clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
                 .AddDisposableTo(Disposables);
 
             LoadLeft = ReactiveCommand.CreateFromTask(LoadJsonLeft)
@@ -159,7 +159,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
 
             ReadRight = ReactiveCommand.CreateFromTask(ReadVariablesRight,
-                    canExecute: clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
+                    _clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
                 .AddDisposableTo(Disposables);
 
             LoadRight = ReactiveCommand.CreateFromTask(LoadJsonRight)
@@ -168,7 +168,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         private SideBySideDiffModel GenerateDiffModel(string left, string right)
         {
-            var diffModel = comparisonBuilder.BuildDiffModel(left, right);
+            var diffModel = _comparisonBuilder.BuildDiffModel(left, right);
 
 
             var leftBox = diffModel.OldText.Lines;
@@ -178,13 +178,13 @@ namespace TwinCatAdsTool.Gui.ViewModels
             LeftBoxText = leftBox.Select(x => new ListBoxItem
             {
                 Content = x.Text,
-                Background = GetBGColor(x),
+                Background = GetBgColor(x),
                 Height = 20
             });
             RightBoxText = rightBox.Select(x => new ListBoxItem
             {
                 Content = x.Text,
-                Background = GetBGColor(x),
+                Background = GetBgColor(x),
                 Height = 20
             });
 
@@ -194,7 +194,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         //manually coloring the ListboxItems depending on their diff state
         //compare https://github.com/SciGit/scigit-client/blob/master/DiffPlex/SilverlightDiffer/TextBoxDiffRenderer.cs
-        private SolidColorBrush GetBGColor(DiffPiece diffPiece)
+        private SolidColorBrush GetBgColor(DiffPiece diffPiece)
         {
             var fillColor = new SolidColorBrush(Colors.Transparent);
             switch (diffPiece.Type)
@@ -224,14 +224,15 @@ namespace TwinCatAdsTool.Gui.ViewModels
         {
             try
             {
-                OpenFileDialog openFileDialog = new OpenFileDialog();
-                openFileDialog.Filter = "Json files (*.json)|*.json";
-                openFileDialog.RestoreDirectory = true;
+                var openFileDialog = new OpenFileDialog
+                {
+                    Filter = "Json files (*.json)|*.json", RestoreDirectory = true
+                };
                 if (openFileDialog.ShowDialog() == true)
                 {
-                    JObject json = JObject.Parse(File.ReadAllText(openFileDialog.FileName));
+                    var json = JObject.Parse(File.ReadAllText(openFileDialog.FileName));
                     Logger.Debug(string.Format(Resources.LoadOfFile0Wasuccesful, openFileDialog.FileName));
-                    return Task.FromResult((json, System.IO.Path.GetFileName(openFileDialog.FileName)));
+                    return Task.FromResult((json, Path.GetFileName(openFileDialog.FileName)));
                 }
             }
             catch (Exception ex)
@@ -248,7 +249,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
             var (json, fileName) = LoadJson().Result;
             if (json != null)
             {
-                leftTextSubject.OnNext(json.ToString());
+                _leftTextSubject.OnNext(json.ToString());
                 SourceLeft = fileName;
                 Logger.Debug(Resources.UpdatedLeftTextBox);
             }
@@ -261,7 +262,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
             var (json, fileName) = LoadJson().Result;
             if (json != null)
             {
-                rightTextSubject.OnNext(json.ToString());
+                _rightTextSubject.OnNext(json.ToString());
                 SourceRight = fileName;
                 Logger.Debug(Resources.UpdatedRightTextBox);
             }
@@ -272,8 +273,8 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         private async Task<JObject> ReadVariables()
         {
-            var persistentVariables = await persistentVariableService.ReadPersistentVariables(clientService.Client, clientService.TreeViewSymbols);
-            leftTextSubject.OnNext(persistentVariables.ToString());
+            var persistentVariables = await _persistentVariableService.ReadPersistentVariables(_clientService.Client, _clientService.TreeViewSymbols);
+            _leftTextSubject.OnNext(persistentVariables.ToString());
 
             Logger.Debug(Resources.ReadPersistentVariables);
             return persistentVariables;
@@ -282,7 +283,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
         private async Task ReadVariablesLeft()
         {
             var json = await ReadVariables().ConfigureAwait(false);
-            leftTextSubject.OnNext(json.ToString());
+            _leftTextSubject.OnNext(json.ToString());
             SourceLeft = "PLC";
 
             Logger.Debug(Resources.UpdatedLeftTextBox);
@@ -291,7 +292,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
         private async Task ReadVariablesRight()
         {
             var json = await ReadVariables();
-            rightTextSubject.OnNext(json.ToString());
+            _rightTextSubject.OnNext(json.ToString());
             SourceRight = "PLC";
 
             Logger.Debug(Resources.UpdatedRightTextBox);

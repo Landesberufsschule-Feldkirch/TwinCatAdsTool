@@ -1,17 +1,15 @@
-﻿using System;
-using System.Linq;
-using TwinCatAdsTool.Interfaces.Commons;
+﻿using TwinCatAdsTool.Interfaces.Commons;
 using TwinCatAdsTool.Interfaces.Extensions;
 
 namespace TwinCatAdsTool.Gui.ViewModels
 {
     public class TabsViewModel : ViewModelBase
     {
-        private readonly IViewModelFactory viewModelFactory;
+        private readonly IViewModelFactory _viewModelFactory;
 
         public TabsViewModel(IViewModelFactory viewModelFactory)
         {
-            this.viewModelFactory = viewModelFactory;
+            _viewModelFactory = viewModelFactory;
         }
 
         public BackupViewModel BackupViewModel { get; set; }
@@ -23,18 +21,18 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public override void Init()
         {
-            BackupViewModel = viewModelFactory.CreateViewModel<BackupViewModel>();
+            BackupViewModel = _viewModelFactory.CreateViewModel<BackupViewModel>();
             BackupViewModel.AddDisposableTo(Disposables);
 
-            CompareViewModel = viewModelFactory.CreateViewModel<CompareViewModel>();
+            CompareViewModel = _viewModelFactory.CreateViewModel<CompareViewModel>();
             CompareViewModel.AddDisposableTo(Disposables);
 
 
-            ExploreViewModel = viewModelFactory.CreateViewModel<ExploreViewModel>();
+            ExploreViewModel = _viewModelFactory.CreateViewModel<ExploreViewModel>();
             ExploreViewModel.AddDisposableTo(Disposables);
 
 
-            RestoreViewModel = viewModelFactory.CreateViewModel<RestoreViewModel>();
+            RestoreViewModel = _viewModelFactory.CreateViewModel<RestoreViewModel>();
             RestoreViewModel.AddDisposableTo(Disposables);
         }
     }

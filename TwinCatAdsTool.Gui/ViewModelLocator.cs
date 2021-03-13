@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Ninject;
+﻿using Ninject;
 using Ninject.Parameters;
 using TwinCatAdsTool.Gui.ViewModels;
 using TwinCatAdsTool.Interfaces.Commons;
@@ -12,7 +10,7 @@ namespace TwinCatAdsTool.Gui
 	{
 		protected readonly IKernel Kernel;
 
-		private static ViewModelLocator s_Instance;
+		private static ViewModelLocator _sInstance;
 
 		public ViewModelLocator()
 		{
@@ -34,9 +32,9 @@ namespace TwinCatAdsTool.Gui
 			BindServices();
 		}
 
-		public static IInstanceCreator DesignInstanceCreator => s_Instance ?? (s_Instance = new ViewModelLocator());
+		public static IInstanceCreator DesignInstanceCreator => _sInstance ?? (_sInstance = new ViewModelLocator());
 
-		public static IViewModelFactory DesignViewModelFactory => s_Instance ?? (s_Instance = new ViewModelLocator());
+		public static IViewModelFactory DesignViewModelFactory => _sInstance ?? (_sInstance = new ViewModelLocator());
 
 		public MainWindowViewModel MainWindowViewModel => Kernel.Get<MainWindowViewModel>();
 
@@ -47,7 +45,7 @@ namespace TwinCatAdsTool.Gui
 			return newObject;
 		}
 
-		public T CreateInstance<T>(ConstructorArgument[] arguments)
+		public T CreateInstance<T>(IParameter[] arguments)
 		{
 			var vm = Kernel.Get<T>(arguments);
 			InitializeInitialziable(vm as IInitializable);

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using TwinCAT.TypeSystem;
+﻿using TwinCAT.TypeSystem;
 
 namespace TwinCatAdsTool.Gui.ViewModels
 {

@@ -14,13 +14,13 @@ namespace TwinCatAdsTool.Gui.ViewModels
 {
     public class ObserverViewModel : ViewModelBase
     {
-        private readonly ISelectionService<ISymbol> symbolSelection;
-        private readonly IViewModelFactory viewModelFactory;
+        private readonly ISelectionService<ISymbol> _symbolSelection;
+        private readonly IViewModelFactory _viewModelFactory;
 
         public ObserverViewModel(IViewModelFactory viewModelFactory, ISelectionService<ISymbol> symbolSelection)
         {
-            this.viewModelFactory = viewModelFactory;
-            this.symbolSelection = symbolSelection;
+            _viewModelFactory = viewModelFactory;
+            _symbolSelection = symbolSelection;
         }
 
         public ObservableCollection<SymbolObservationViewModel> ViewModels { get; set; } = new ObservableCollection<SymbolObservationViewModel>();
@@ -28,7 +28,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
         public override void Init()
         {
             ViewModels.Clear();
-            symbolSelection.Elements
+            _symbolSelection.Elements
                 .ObserveOnDispatcher()
                 .Do(CreateViewModelOrShowMessage)
                 .Subscribe()
@@ -42,58 +42,58 @@ namespace TwinCatAdsTool.Gui.ViewModels
                 switch (symbol.TypeName)
                 {
                     case "BOOL":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<bool>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<bool>>(symbol));
                         break;
                     case "BYTE":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<byte>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<byte>>(symbol));
                         break;
                     case "WORD":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<ushort>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<ushort>>(symbol));
                         break;
                     case "DWORD":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<uint>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<uint>>(symbol));
                         break;
                     case "SINT":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<sbyte>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<sbyte>>(symbol));
                         break;
                     case "USINT":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<byte>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<byte>>(symbol));
                         break;
                     case "INT":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<short>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<short>>(symbol));
                         break;
                     case "UINT":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<ushort>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<ushort>>(symbol));
                         break;
                     case "DINT":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<int>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<int>>(symbol));
                         break;
                     case "UDINT":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<uint>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<uint>>(symbol));
                         break;
                     case "REAL":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<float>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<float>>(symbol));
                         break;
                     case "LREAL":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<double>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<double>>(symbol));
                         break;
                     case "STRING":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<string>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<string>>(symbol));
                         break;
                     case "DATE_AND_TIME":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<DT>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<DT>>(symbol));
                         break;
                     case "LTIME":
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<LTIME>>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<LTIME>>(symbol));
                         break;
                     default:
                         if (symbol.TypeName.ToUpper().StartsWith("STRING"))
                         {
-                            ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<string>>(symbol));
+                            ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationViewModel<string>>(symbol));
                             break;
                         }
 
-                        ViewModels.Add(viewModelFactory.CreateViewModel<ISymbol, SymbolObservationDefaultViewModel>(symbol));
+                        ViewModels.Add(_viewModelFactory.CreateViewModel<ISymbol, SymbolObservationDefaultViewModel>(symbol));
                         var exception = new NotImplementedException(Resources.ThisTypeIsNotImplemented);
                         Logger.Error(exception.Message, exception);
                         break;

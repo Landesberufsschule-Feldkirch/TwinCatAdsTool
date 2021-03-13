@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.Sockets;
 using System.Reactive;
@@ -10,7 +8,6 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Humanizer;
 using log4net;
 using Ninject;
@@ -22,18 +19,16 @@ using TwinCatAdsTool.Interfaces.Extensions;
 using TwinCatAdsTool.Interfaces.Logging;
 using TwinCatAdsTool.Interfaces.Models;
 using TwinCatAdsTool.Interfaces.Services;
-using TwinCatAdsTool.Logic.Properties;
-using TwinCatAdsTool.Logic.Router;
 
 namespace TwinCatAdsTool.Logic.Services
 {
     public class ClientService : IClientService, IInitializable, IDisposable
     {
-        private readonly BehaviorSubject<ConnectionState> connectionStateSubject = new BehaviorSubject<ConnectionState>(TwinCAT.ConnectionState.Unknown);
-        private readonly BehaviorSubject<IEnumerable<NetId>> foundNetIdSubject = new BehaviorSubject<IEnumerable<NetId>>(null);
-        private readonly CompositeDisposable disposables = new CompositeDisposable();
-        private readonly BehaviorSubject<string> adsStateSubject = new BehaviorSubject<string>(TwinCAT.Ads.AdsState.Idle.ToString());
-        private readonly ILog logger = LoggerFactory.GetLogger();
+        private readonly BehaviorSubject<ConnectionState> _connectionStateSubject = new BehaviorSubject<ConnectionState>(TwinCAT.ConnectionState.Unknown);
+        private readonly BehaviorSubject<IEnumerable<NetId>> _foundNetIdSubject = new BehaviorSubject<IEnumerable<NetId>>(null);
+        private readonly CompositeDisposable _disposables = new CompositeDisposable();
+        private readonly BehaviorSubject<string> _adsStateSubject = new BehaviorSubject<string>(TwinCAT.Ads.AdsState.Idle.ToString());
+        private readonly ILog _logger = LoggerFactory.GetLogger();
         public ClientService()
         {
             Client = new TcAdsClient();
@@ -59,21 +54,21 @@ namespace TwinCatAdsTool.Logic.Services
         }
 
         public TcAdsClient Client { get; }
-        public IObservable<ConnectionState> ConnectionState => connectionStateSubject.AsObservable();
-        public IObservable<string> AdsState => adsStateSubject.AsObservable();
+        public IObservable<ConnectionState> ConnectionState => _connectionStateSubject.AsObservable();
+        public IObservable<string> AdsState => _adsStateSubject.AsObservable();
         public ReadOnlySymbolCollection TreeViewSymbols { get; set; }
         public ReadOnlySymbolCollection FlatViewSymbols { get; set; }
-        public IObservable<IEnumerable<NetId>> DevicesFound => foundNetIdSubject.AsObservable();
+        public IObservable<IEnumerable<NetId>> DevicesFound => _foundNetIdSubject.AsObservable();
         public Task Reload()
         {
-            return Task.Run(() => UpdateSymbols(connectionStateSubject.Value));
+            return Task.Run(() => UpdateSymbols(_connectionStateSubject.Value));
         }
 
         public Task Disconnect()
         {
             Client.Disconnect();
             ConnectionStarted = false;
-            adsStateSubject.OnNext(TwinCAT.Ads.AdsState.Idle.ToString());
+            _adsStateSubject.OnNext(TwinCAT.Ads.AdsState.Idle.ToString());
             return Task.FromResult(Unit.Default);
         }
 
@@ -82,23 +77,23 @@ namespace TwinCatAdsTool.Logic.Services
             Observable.FromEventPattern<ConnectionStateChangedEventArgs>(ev => Client.ConnectionStateChanged += ev,
                     ev => Client.ConnectionStateChanged -= ev)
                 .Select(pattern => pattern.EventArgs.NewState)
-                .Subscribe(connectionStateSubject.OnNext)
-                .AddDisposableTo(disposables);
+                .Subscribe(_connectionStateSubject.OnNext)
+                .AddDisposableTo(_disposables);
             
-            connectionStateSubject
+            _connectionStateSubject
                 .DistinctUntilChanged()
                 .Where(state => state == TwinCAT.ConnectionState.Connected)
                 .Do(UpdateSymbols)
                 .Subscribe()
-                .AddDisposableTo(disposables);
+                .AddDisposableTo(_disposables);
   
             Observable.Interval(TimeSpan.FromSeconds(1))
                 .ObserveOnDispatcher()
                 .Do(_ => CheckConnectionHealth())
                 .Subscribe()
-                .AddDisposableTo(disposables);
+                .AddDisposableTo(_disposables);
             
-            IPHostEntry host = Dns.GetHostEntry(Dns.GetHostName());
+            var host = Dns.GetHostEntry(Dns.GetHostName());
 
             var localhost = host
                 .AddressList
@@ -107,8 +102,8 @@ namespace TwinCatAdsTool.Logic.Services
             Observable.Return(Unit.Default)
                 .SelectMany(_ => DeviceFinder.BroadcastSearchAsync(localhost))
                 .Select(x => x.Select(d => new NetId{Name = d.Name, Address = d.AmsNetId.ToString()}))
-                .Subscribe(foundNetIdSubject.OnNext)
-                .AddDisposableTo(disposables)
+                .Subscribe(_foundNetIdSubject.OnNext)
+                .AddDisposableTo(_disposables)
                 ;
                 
         }
@@ -140,19 +135,19 @@ namespace TwinCatAdsTool.Logic.Services
                         Client.Connect(CurrentAmsNetId, CurrentPort);
                     }
                     else
-                        connectionStateSubject.OnNext(TwinCAT.ConnectionState.Connected);
+                        _connectionStateSubject.OnNext(TwinCAT.ConnectionState.Connected);
                     
                     var state = Client.ReadState();
-                    adsStateSubject.OnNext(state.AdsState.ToString());
+                    _adsStateSubject.OnNext(state.AdsState.ToString());
                 }
             }
             catch (AdsErrorException e)
             {
-                adsStateSubject.OnNext(TwinCAT.Ads.AdsState.Invalid+" - "+e.ErrorCode.Humanize());
+                _adsStateSubject.OnNext(TwinCAT.Ads.AdsState.Invalid+" - "+e.ErrorCode.Humanize());
                 
                 if (!Client.IsConnected)
                 {
-                    connectionStateSubject.OnNext(TwinCAT.ConnectionState.Lost);
+                    _connectionStateSubject.OnNext(TwinCAT.ConnectionState.Lost);
                     Client.Disconnect();
                 }
             }
@@ -162,7 +157,7 @@ namespace TwinCatAdsTool.Logic.Services
         {
             Client.Disconnect();
             Client?.Dispose();
-            disposables?.Dispose();
+            _disposables?.Dispose();
         }
     }
 }

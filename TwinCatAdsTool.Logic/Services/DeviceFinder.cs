@@ -20,7 +20,7 @@ namespace TwinCatAdsTool.Logic.Services
 
         public static async Task<IEnumerable<RemotePlcInfo>> BroadcastSearchAsync(IPAddress localhost, int adsUdpPort)
         {
-            var devices =  await BroadcastSearchAsync(localhost, timeout: 1000, adsUdpPort);
+            var devices =  await BroadcastSearchAsync(localhost, 1000, adsUdpPort);
             return devices;
         }
 
@@ -30,7 +30,7 @@ namespace TwinCatAdsTool.Logic.Services
 
             var broadcast =
                 new IPEndPoint(
-                    IPHelper.GetBroadcastAddress(localhost),
+                    IpHelper.GetBroadcastAddress(localhost),
                     adsUdpPort);
 
             var response = await request.SendAsync(broadcast);
@@ -65,9 +65,8 @@ namespace TwinCatAdsTool.Logic.Services
 
         private static RemotePlcInfo ParseBroadcastSearchResponse(ResponseResult rr)
         {
-            var device = new RemotePlcInfo();
+            var device = new RemotePlcInfo {Address = rr.RemoteHost};
 
-            device.Address = rr.RemoteHost;
 
             if (!rr.Buffer.Take(4).ToArray().SequenceEqual(Segment.HEADER))
             {
@@ -99,7 +98,7 @@ namespace TwinCatAdsTool.Logic.Services
                     0;
 
             var bName = rr.NextChunk(nameLen - 1, add: 1);
-            device.Name = System.Text.ASCIIEncoding.Default.GetString(bName);
+            device.Name = Encoding.Default.GetString(bName);
 
             // TCat type
             var tcatType = rr.NextChunk(Segment.TCATTYPE_RUNTIME.Length);
@@ -171,7 +170,7 @@ namespace TwinCatAdsTool.Logic.Services
 
                     if (!isUnicode)
                     {
-                        device.Comment = ASCIIEncoding.Default.GetString(description);
+                        device.Comment = Encoding.Default.GetString(description);
                     }
                     else
                     {

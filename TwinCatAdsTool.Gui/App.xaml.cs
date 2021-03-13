@@ -1,13 +1,9 @@
-﻿using System;
-using System.Linq;
-using System.Windows;
-
-namespace TwinCatAdsTool.Gui
+﻿namespace TwinCatAdsTool.Gui
 {
 	/// <summary>
 	/// Interaction logic for App.xaml
 	/// </summary>
-	public partial class App : Application
-	{
+	public partial class App
+    {
 	}
 }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net;
 using TwinCAT.Ads;
 
 namespace TwinCatAdsTool.Logic.Router
@@ -26,6 +21,6 @@ namespace TwinCatAdsTool.Logic.Router
 
         public bool IsRuntime { get; set; } = false;
 
-        public string TcVersionString { get { return TcVersion.Version.ToString() + "." + TcVersion.Revision.ToString() + "." + TcVersion.Build.ToString(); } }
+        public string TcVersionString => TcVersion.Version + "." + TcVersion.Revision + "." + TcVersion.Build;
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Reactive.Linq;
 using DynamicData;
 using System.Linq;
@@ -21,45 +20,45 @@ namespace TwinCatAdsTool.Gui.ViewModels
 {
     public class ConnectionCabViewModel : ViewModelBase
     {
-        private readonly IClientService clientService;
-        private ObservableAsPropertyHelper<ConnectionState> connectionStateHelper;
-        private int port = 851;
-        private string selectedNetId;
-        private NetId selectedAmsNetId;
-        private ObservableAsPropertyHelper<string> adsStatusHelper;
+        private readonly IClientService _clientService;
+        private ObservableAsPropertyHelper<ConnectionState> _connectionStateHelper;
+        private int _port = 851;
+        private string _selectedNetId;
+        private NetId _selectedAmsNetId;
+        private ObservableAsPropertyHelper<string> _adsStatusHelper;
 
 
         public ConnectionCabViewModel(IClientService clientService)
         {
-            this.clientService = clientService;
+            _clientService = clientService;
         }
 
         public ObservableCollection<NetId> AmsNetIds { get; set; } = new ObservableCollection<NetId>();
         public ReactiveCommand<Unit, Unit> Connect { get; set; }
 
-        public ConnectionState ConnectionState => connectionStateHelper.Value;
+        public ConnectionState ConnectionState => _connectionStateHelper.Value;
         public ReactiveCommand<Unit, Unit> Disconnect { get; set; }
 
         public int Port
         {
-            get => port;
+            get => _port;
             set
             {
-                if (value == port) return;
-                port = value;
+                if (value == _port) return;
+                _port = value;
                 raisePropertyChanged();
             }
         }
 
         public NetId SelectedAmsNetId
         {
-            get { return selectedAmsNetId; }
+            get => _selectedAmsNetId;
 
             set
             {
-                if (selectedAmsNetId != value)
+                if (_selectedAmsNetId != value)
                 {
-                    selectedAmsNetId = value;
+                    _selectedAmsNetId = value;
                     raisePropertyChanged();
                 }
             }
@@ -68,12 +67,12 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public string SelectedNetId
         {
-            get => selectedNetId;
+            get => _selectedNetId;
             set
             {
-                if (selectedNetId != value)
+                if (_selectedNetId != value)
                 {
-                    selectedNetId = value;
+                    _selectedNetId = value;
                     raisePropertyChanged();
                 }
             }
@@ -82,23 +81,23 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public override void Init()
         {
-            Connect = ReactiveCommand.CreateFromTask(ConnectClient, canExecute: clientService.ConnectionState.Select(state => state != ConnectionState.Connected))
+            Connect = ReactiveCommand.CreateFromTask(ConnectClient, _clientService.ConnectionState.Select(state => state != ConnectionState.Connected))
                 .AddDisposableTo(Disposables).SetupErrorHandling(Logger, Disposables);
-            Disconnect = ReactiveCommand.CreateFromTask(DisconnectClient, canExecute: clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
+            Disconnect = ReactiveCommand.CreateFromTask(DisconnectClient, _clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
                 .AddDisposableTo(Disposables).SetupErrorHandling(Logger, Disposables);
             
-            connectionStateHelper = clientService
+            _connectionStateHelper = _clientService
                 .ConnectionState
                 .ObserveOnDispatcher()
                 .ToProperty(this, model => model.ConnectionState);
 
-            adsStatusHelper = clientService
+            _adsStatusHelper = _clientService
                 .AdsState
                 .ObserveOnDispatcher()
                 .ToProperty(this, model => model.AdsStatus);
 
 
-            clientService.DevicesFound
+            _clientService.DevicesFound
                 .Where(d => d != null)
                 .ObserveOnDispatcher()
                 .Do(devices => AmsNetIds.AddRange(devices))
@@ -116,13 +115,13 @@ namespace TwinCatAdsTool.Gui.ViewModels
             
         }
 
-        public string AdsStatus => adsStatusHelper.Value;
+        public string AdsStatus => _adsStatusHelper.Value;
 
         private async Task ConnectClient()
         {
             try
             {
-                await clientService.Connect(SelectedNetId, Port);
+                await _clientService.Connect(SelectedNetId, Port);
                 Logger.Debug(string.Format(Resources.ClientConnectedToDevice0WithAddress1, SelectedAmsNetId?.Name,
                     SelectedAmsNetId?.Address));
             }
@@ -135,7 +134,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         private async Task DisconnectClient()
         {
-            await clientService.Disconnect();
+            await _clientService.Disconnect();
             Logger.Debug("Client disconnected");
         }
     }

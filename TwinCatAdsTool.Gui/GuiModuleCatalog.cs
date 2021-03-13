@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using Ninject.Modules;
+﻿using Ninject.Modules;
 
 namespace TwinCatAdsTool.Gui
 {

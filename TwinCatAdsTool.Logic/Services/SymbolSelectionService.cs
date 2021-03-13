@@ -8,11 +8,11 @@ namespace TwinCatAdsTool.Logic.Services
 {
     public class SymbolSelectionService : ISelectionService<ISymbol>
     {
-        private readonly Subject<ISymbol> elements = new Subject<ISymbol>();
-        public IObservable<ISymbol> Elements => elements.AsObservable();
+        private readonly Subject<ISymbol> _elements = new Subject<ISymbol>();
+        public IObservable<ISymbol> Elements => _elements.AsObservable();
         public void Select(ISymbol element)
         {
-            elements.OnNext(element);
+            _elements.OnNext(element);
         }
     }
 }

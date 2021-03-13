@@ -23,28 +23,28 @@ namespace TwinCatAdsTool.Gui.ViewModels
 {
     public class ExploreViewModel : ViewModelBase
     {
-        private readonly IClientService clientService;
-        private readonly ISelectionService<ISymbol> symbolSelection;
+        private readonly IClientService _clientService;
+        private readonly ISelectionService<ISymbol> _symbolSelection;
 
-        private readonly Subject<ReadOnlySymbolCollection> variableSubject = new Subject<ReadOnlySymbolCollection>();
+        private readonly Subject<ReadOnlySymbolCollection> _variableSubject = new Subject<ReadOnlySymbolCollection>();
 
-        private readonly IViewModelFactory viewModelFactory;
-        private bool isConnected;
-        private ObservableAsPropertyHelper<bool> isConnectedHelper;
+        private readonly IViewModelFactory _viewModelFactory;
+        private bool _isConnected;
+        private ObservableAsPropertyHelper<bool> _isConnectedHelper;
 
-        private ObservableCollection<IValueSymbol> observedSymbols;
+        private ObservableCollection<IValueSymbol> _observedSymbols;
 
-        private string searchText;
+        private string _searchText;
 
-        private ObservableCollection<ISymbol> treeNodes;
+        private ObservableCollection<ISymbol> _treeNodes;
 
 
         public ExploreViewModel(IClientService clientService,
             IViewModelFactory viewModelFactory, ISelectionService<ISymbol> symbolSelection)
         {
-            this.clientService = clientService;
-            this.viewModelFactory = viewModelFactory;
-            this.symbolSelection = symbolSelection;
+            _clientService = clientService;
+            _viewModelFactory = viewModelFactory;
+            _symbolSelection = symbolSelection;
         }
 
         public ReactiveCommand<ISymbol, Unit> AddObserverCmd { get; set; }
@@ -59,26 +59,26 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public bool IsConnected
         {
-            get { return isConnectedHelper.Value; }
+            get => _isConnectedHelper.Value;
             set
             {
-                if (isConnectedHelper.Value == value)
+                if (_isConnectedHelper.Value == value)
                 {
                     return;
                 }
 
-                isConnected = value;
+                _isConnected = value;
                 raisePropertyChanged();
             }
         }
 
         public ObservableCollection<IValueSymbol> ObservedSymbols
         {
-            get => observedSymbols ?? (observedSymbols = new ObservableCollection<IValueSymbol>());
+            get => _observedSymbols ?? (_observedSymbols = new ObservableCollection<IValueSymbol>());
             set
             {
-                if (value == observedSymbols) return;
-                observedSymbols = value;
+                if (value == _observedSymbols) return;
+                _observedSymbols = value;
                 raisePropertyChanged();
             }
         }
@@ -92,15 +92,15 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public string SearchText
         {
-            get { return searchText; }
+            get => _searchText;
             set
             {
-                if (searchText == value)
+                if (_searchText == value)
                 {
                     return;
                 }
 
-                searchText = value;
+                _searchText = value;
                 raisePropertyChanged();
             }
         }
@@ -109,26 +109,26 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public ObservableCollection<ISymbol> TreeNodes
         {
-            get => treeNodes ?? (treeNodes = new ObservableCollection<ISymbol>());
+            get => _treeNodes ?? (_treeNodes = new ObservableCollection<ISymbol>());
             set
             {
-                if (value == treeNodes)
+                if (value == _treeNodes)
                 {
                     return;
                 }
 
-                treeNodes = value;
+                _treeNodes = value;
                 raisePropertyChanged();
             }
         }
 
         public override void Init()
         {
-            ObserverViewModel = viewModelFactory.Create<ObserverViewModel>();
+            ObserverViewModel = _viewModelFactory.Create<ObserverViewModel>();
             ObserverViewModel.AddDisposableTo(Disposables);
 
 
-            variableSubject
+            _variableSubject
                 .ObserveOnDispatcher()
                 .Do(UpdateTree)
                 .Retry()
@@ -143,20 +143,20 @@ namespace TwinCatAdsTool.Gui.ViewModels
                 .Subscribe()
                 .AddDisposableTo(Disposables);
 
-            var connected = clientService.ConnectionState.Select(state => state == ConnectionState.Connected);
+            var connected = _clientService.ConnectionState.Select(state => state == ConnectionState.Connected);
 
-            clientService.ConnectionState
+            _clientService.ConnectionState
                 .DistinctUntilChanged()
                 .Where(state => state == ConnectionState.Connected)
-                .Do(_ => variableSubject.OnNext(clientService.TreeViewSymbols))
+                .Do(_ => _variableSubject.OnNext(_clientService.TreeViewSymbols))
                 .Subscribe()
                 .AddDisposableTo(Disposables);
 
-            connected.ToProperty(this, x => x.IsConnected, out isConnectedHelper);
+            connected.ToProperty(this, x => x.IsConnected, out _isConnectedHelper);
 
             AssignCommands(connected);
 
-            GraphViewModel = viewModelFactory.CreateViewModel<GraphViewModel>();
+            GraphViewModel = _viewModelFactory.CreateViewModel<GraphViewModel>();
             GraphViewModel.AddDisposableTo(Disposables);
 
             this.WhenAnyValue(x => x.ObservedSymbols).Subscribe().AddDisposableTo(Disposables);
@@ -171,7 +171,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
             // Transform the event stream into a stream of strings (the input values)
             var input = searchTextChanged
-                .Where((ev => SearchText == null || SearchText.Length < 5))
+                .Where(ev => SearchText == null || SearchText.Length < 5)
                 .Throttle(TimeSpan.FromSeconds(3))
                 .Merge(searchTextChanged
                            .Where(ev => SearchText != null && SearchText.Length >= 5)
@@ -222,7 +222,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
             CmdRemoveGraph = ReactiveCommand.CreateFromTask<SymbolObservationViewModel, Unit>(RemoveGraph)
                 .AddDisposableTo(Disposables);
 
-            Read = ReactiveCommand.CreateFromTask(ReadVariables, canExecute: connected)
+            Read = ReactiveCommand.CreateFromTask(ReadVariables, connected)
                 .AddDisposableTo(Disposables);
         }
 
@@ -253,7 +253,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
             var searchResult = new SearchResult {Results = new List<ISymbol>(), SearchTerm = searchTerm};
             try
             {
-                var iterator = new SymbolIterator(clientService.FlatViewSymbols, s => s.InstancePath.ToLower().Contains(searchTerm.ToLower()));
+                var iterator = new SymbolIterator(_clientService.FlatViewSymbols, s => s.InstancePath.ToLower().Contains(searchTerm.ToLower()));
                 searchResult.Results = iterator;
             }
             catch (Exception ex)
@@ -269,7 +269,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
         {
             try
             {
-                await clientService.Reload();
+                await _clientService.Reload();
             }
             catch (Exception ex)
             {
@@ -295,7 +295,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
                     return Task.FromResult(Unit.Default);
                 }
 
-                symbolSelection.Select(symbol);
+                _symbolSelection.Select(symbol);
             }
             catch (Exception ex)
             {

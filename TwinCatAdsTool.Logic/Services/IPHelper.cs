@@ -1,32 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TwinCatAdsTool.Logic.Services
 {
-    public static class IPHelper
+    public static class IpHelper
     {
         public static IPAddress GetBroadcastAddress(IPAddress localhost)
         {
-            IPAddress hostMask = GetHostMask(localhost);
+            var hostMask = GetHostMask(localhost);
 
             if (hostMask == null || localhost == null)
             {
                 return null;
             }
 
-            byte[] complementedMaskBytes = new byte[4];
-            byte[] broadcastIpBytes = new byte[4];
+            var complementedMaskBytes = new byte[4];
+            var broadcastIpBytes = new byte[4];
 
-            for (int i = 0; i < 4; i++)
+            for (var i = 0; i < 4; i++)
             {
                 complementedMaskBytes[i] = (byte)
-                    ~(hostMask.GetAddressBytes().ElementAt(i));
+                    ~hostMask.GetAddressBytes().ElementAt(i);
 
                 broadcastIpBytes[i] = (byte)(
                     localhost.GetAddressBytes().ElementAt(i) |
@@ -43,14 +40,14 @@ namespace TwinCatAdsTool.Logic.Services
         /// <returns>May produce exception or return null!</returns>
         public static IPAddress GetHostMask(IPAddress localhost)
         {
-            string strLocalAddress = localhost.ToString();
-            NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
+            var strLocalAddress = localhost.ToString();
+            var interfaces = NetworkInterface.GetAllNetworkInterfaces();
 
-            foreach (NetworkInterface netInterface in interfaces)
+            foreach (var netInterface in interfaces)
             {
-                UnicastIPAddressInformationCollection unicastInfos = netInterface.GetIPProperties().UnicastAddresses;
+                var unicastInfos = netInterface.GetIPProperties().UnicastAddresses;
 
-                foreach (UnicastIPAddressInformation info in unicastInfos)
+                foreach (var info in unicastInfos)
                 {
                     if (info.Address.ToString() == strLocalAddress)
                     {
@@ -62,7 +59,7 @@ namespace TwinCatAdsTool.Logic.Services
             return null;
         }
 
-        public static List<IPAddress> Localhosts { get { return FilteredLocalhosts(); } }
+        public static List<IPAddress> Localhosts => FilteredLocalhosts();
 
         public static List<IPAddress> FilteredLocalhosts()
         {
@@ -77,13 +74,13 @@ namespace TwinCatAdsTool.Logic.Services
                     new List<NetworkInterfaceType> {NetworkInterfaceType.Wireless80211, NetworkInterfaceType.Ethernet};
             }
 
-            List<IPAddress> localhosts = new List<IPAddress>();
+            var localhosts = new List<IPAddress>();
 
-            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
             {
                 if (niTypes.Contains(ni.NetworkInterfaceType))
                 {
-                    foreach (UnicastIPAddressInformation unicastInfo in ni.GetIPProperties().UnicastAddresses)
+                    foreach (var unicastInfo in ni.GetIPProperties().UnicastAddresses)
                     {
                         if (unicastInfo.Address.AddressFamily == AddressFamily.InterNetwork)
                         {

@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Threading.Tasks;
 using TwinCAT;
 using TwinCAT.Ads;
 using TwinCAT.TypeSystem;
-using TwinCAT.TypeSystem.Generic;
 using TwinCatAdsTool.Interfaces.Models;
 
 namespace TwinCatAdsTool.Interfaces.Services

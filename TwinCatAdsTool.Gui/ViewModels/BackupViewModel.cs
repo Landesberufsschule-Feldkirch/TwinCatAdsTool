@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -18,25 +17,25 @@ namespace TwinCatAdsTool.Gui.ViewModels
 {
     public class BackupViewModel : ViewModelBase
     {
-        private readonly IClientService clientService;
-        private readonly IPersistentVariableService persistentVariableService;
-        private readonly Subject<JObject> variableSubject = new Subject<JObject>();
-        private string backupText;
-        private ObservableAsPropertyHelper<string> currentTaskHelper;
+        private readonly IClientService _clientService;
+        private readonly IPersistentVariableService _persistentVariableService;
+        private readonly Subject<JObject> _variableSubject = new Subject<JObject>();
+        private string _backupText;
+        private ObservableAsPropertyHelper<string> _currentTaskHelper;
 
         public BackupViewModel(IClientService clientService, IPersistentVariableService persistentVariableService)
         {
-            this.clientService = clientService;
-            this.persistentVariableService = persistentVariableService;
+            _clientService = clientService;
+            _persistentVariableService = persistentVariableService;
         }
 
         public string BackupText
         {
-            get => backupText;
+            get => _backupText;
             set
             {
-                if (value == backupText) return;
-                backupText = value;
+                if (value == _backupText) return;
+                _backupText = value;
                 raisePropertyChanged();
             }
         }
@@ -46,7 +45,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public override void Init()
         {
-            variableSubject
+            _variableSubject
                 .ObserveOnDispatcher()
                 .Do(o => BackupText = o.ToString(Formatting.Indented))
                 .Retry()
@@ -54,21 +53,21 @@ namespace TwinCatAdsTool.Gui.ViewModels
                 .AddDisposableTo(Disposables)
                 ;
 
-            Read = ReactiveCommand.CreateFromTask(ReadVariables, canExecute: clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
+            Read = ReactiveCommand.CreateFromTask(ReadVariables, _clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
                 .AddDisposableTo(Disposables);
 
-            Save = ReactiveCommand.CreateFromTask(SaveVariables, clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
+            Save = ReactiveCommand.CreateFromTask(SaveVariables, _clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
                 .AddDisposableTo(Disposables);
 
-            currentTaskHelper = persistentVariableService.CurrentTask.ToProperty(this, vm => vm.CurrentTask);
+            _currentTaskHelper = _persistentVariableService.CurrentTask.ToProperty(this, vm => vm.CurrentTask);
         }
 
-        public string CurrentTask => currentTaskHelper.Value;
+        public string CurrentTask => _currentTaskHelper.Value;
 
         private async Task<Unit> ReadVariables()
         {
-            var persistentVariables = await persistentVariableService.ReadPersistentVariables(clientService.Client, clientService.TreeViewSymbols);
-            variableSubject.OnNext(persistentVariables);
+            var persistentVariables = await _persistentVariableService.ReadPersistentVariables(_clientService.Client, _clientService.TreeViewSymbols);
+            _variableSubject.OnNext(persistentVariables);
             Logger.Debug(Resources.ReadPersistentVariables);
 
             return Unit.Default;
@@ -76,11 +75,13 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         private Task<Unit> SaveVariables()
         {
-            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
-            saveFileDialog1.Filter = "Json|*.json";
-            saveFileDialog1.Title = "Save in a json file";
-            saveFileDialog1.FileName = $"Backup_{DateTime.Now:yyy-MM-dd-HHmmss}.json";
-            saveFileDialog1.RestoreDirectory = true;
+            var saveFileDialog1 = new SaveFileDialog
+            {
+                Filter = "Json|*.json",
+                Title = "Save in a json file",
+                FileName = $"Backup_{DateTime.Now:yyy-MM-dd-HHmmss}.json",
+                RestoreDirectory = true
+            };
             var result = saveFileDialog1.ShowDialog();
             if (result == DialogResult.OK || result == DialogResult.Yes)
             {

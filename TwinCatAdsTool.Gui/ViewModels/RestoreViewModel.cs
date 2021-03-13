@@ -8,7 +8,6 @@ using System.Reactive;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Forms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using ReactiveUI;
@@ -24,58 +23,58 @@ namespace TwinCatAdsTool.Gui.ViewModels
 {
     public class RestoreViewModel : ViewModelBase
     {
-        private readonly BehaviorSubject<bool> canWrite = new BehaviorSubject<bool>(false);
-        private readonly IClientService clientService;
-        private readonly BehaviorSubject<JObject> fileVariableSubject = new BehaviorSubject<JObject>(new JObject());
-        private readonly BehaviorSubject<JObject> liveVariableSubject = new BehaviorSubject<JObject>(new JObject());
-        private readonly IPersistentVariableService persistentVariableService;
-        private ObservableCollection<VariableViewModel> displayVariables;
-        private ObservableCollection<VariableViewModel> fileVariables;
-        private ObservableCollection<VariableViewModel> liveVariables;
+        private readonly BehaviorSubject<bool> _canWrite = new BehaviorSubject<bool>(false);
+        private readonly IClientService _clientService;
+        private readonly BehaviorSubject<JObject> _fileVariableSubject = new BehaviorSubject<JObject>(new JObject());
+        private readonly BehaviorSubject<JObject> _liveVariableSubject = new BehaviorSubject<JObject>(new JObject());
+        private readonly IPersistentVariableService _persistentVariableService;
+        private ObservableCollection<VariableViewModel> _displayVariables;
+        private ObservableCollection<VariableViewModel> _fileVariables;
+        private ObservableCollection<VariableViewModel> _liveVariables;
 
         public RestoreViewModel(IClientService clientService, IPersistentVariableService persistentVariableService)
         {
-            this.clientService = clientService;
-            this.persistentVariableService = persistentVariableService;
+            _clientService = clientService;
+            _persistentVariableService = persistentVariableService;
         }
 
         public ObservableCollection<VariableViewModel> DisplayVariables
         {
-            get => displayVariables ?? (displayVariables = new ObservableCollection<VariableViewModel>());
+            get => _displayVariables ?? (_displayVariables = new ObservableCollection<VariableViewModel>());
             set
             {
-                if (value == displayVariables)
+                if (value == _displayVariables)
                 {
                     return;
                 }
 
-                liveVariables = value;
+                _liveVariables = value;
                 raisePropertyChanged();
             }
         }
 
         public ObservableCollection<VariableViewModel> FileVariables
         {
-            get => fileVariables ?? (fileVariables = new ObservableCollection<VariableViewModel>());
+            get => _fileVariables ?? (_fileVariables = new ObservableCollection<VariableViewModel>());
             set
             {
-                if (value == fileVariables)
+                if (value == _fileVariables)
                 {
                     return;
                 }
 
-                fileVariables = value;
+                _fileVariables = value;
                 raisePropertyChanged();
             }
         }
 
         public ObservableCollection<VariableViewModel> LiveVariables
         {
-            get => liveVariables ?? (liveVariables = new ObservableCollection<VariableViewModel>());
+            get => _liveVariables ?? (_liveVariables = new ObservableCollection<VariableViewModel>());
             set
             {
-                if (value == liveVariables) return;
-                liveVariables = value;
+                if (value == _liveVariables) return;
+                _liveVariables = value;
                 raisePropertyChanged();
             }
         }
@@ -85,7 +84,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public override void Init()
         {
-            fileVariableSubject
+            _fileVariableSubject
                 .ObserveOnDispatcher()
                 .Do(x => UpdateVariables(x, FileVariables))
                 .Do(x => UpdateDisplayIfMatching())
@@ -94,13 +93,13 @@ namespace TwinCatAdsTool.Gui.ViewModels
                 .AddDisposableTo(Disposables)
                 ;
 
-            canWrite.Subscribe().AddDisposableTo(Disposables);
+            _canWrite.Subscribe().AddDisposableTo(Disposables);
 
 
-            Load = ReactiveCommand.CreateFromTask(LoadVariables, canExecute: clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
+            Load = ReactiveCommand.CreateFromTask(LoadVariables, _clientService.ConnectionState.Select(state => state == ConnectionState.Connected))
                 .AddDisposableTo(Disposables);
 
-            Write = ReactiveCommand.CreateFromTask(WriteVariables, canWrite.Select(x => x))
+            Write = ReactiveCommand.CreateFromTask(WriteVariables, _canWrite.Select(x => x))
                 .AddDisposableTo(Disposables);
         }
 
@@ -112,9 +111,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
                 {
                     if (prop.Value is JObject)
                     {
-                        var variable = new VariableViewModel();
-                        variable.Name = prop.Name;
-                        variable.Json = prop.Value.ToString();
+                        var variable = new VariableViewModel {Name = prop.Name, Json = prop.Value.ToString()};
                         variables.Add(variable);
                     }
                 }
@@ -135,14 +132,12 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         private Task<Unit> LoadVariablesFromFile()
         {
-            OpenFileDialog openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Json files (*.json)|*.json";
-            openFileDialog.RestoreDirectory = true;
+            var openFileDialog = new OpenFileDialog {Filter = "Json files (*.json)|*.json", RestoreDirectory = true};
             if (openFileDialog.ShowDialog() == true)
             {
-                JObject json = JObject.Parse(File.ReadAllText(openFileDialog.FileName));
-                fileVariableSubject.OnNext(json);
-                canWrite.OnNext(true);
+                var json = JObject.Parse(File.ReadAllText(openFileDialog.FileName));
+                _fileVariableSubject.OnNext(json);
+                _canWrite.OnNext(true);
             }
 
             return Task.FromResult(Unit.Default);
@@ -167,7 +162,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         private async Task<Unit> WriteVariables()
         {
-            MessageBoxResult messageBoxResult = MessageBox.Show(Resources.AreYouSureYouWantToOverwriteTheLiveVariablesOnThePLC, Resources.OverwriteConfirmation, MessageBoxButton.YesNo);
+            var messageBoxResult = MessageBox.Show(Resources.AreYouSureYouWantToOverwriteTheLiveVariablesOnThePLC, Resources.OverwriteConfirmation, MessageBoxButton.YesNo);
             if (messageBoxResult == MessageBoxResult.Yes)
             {
                 foreach (var variable in DisplayVariables)
@@ -179,11 +174,11 @@ namespace TwinCatAdsTool.Gui.ViewModels
                         {
                             Logger.Debug($"Restoring variable '{variable.Name}.{p.Name}' from backup...");
                             if(p.Value is JObject)
-                                await clientService.Client.WriteJson(variable.Name + "." + p.Name, (JObject) p.Value, force: true);
+                                await _clientService.Client.WriteJson(variable.Name + "." + p.Name, (JObject) p.Value, true);
                             else if(p.Value is JArray)
-                                await clientService.Client.WriteJson(variable.Name + "." + p.Name, (JArray) p.Value, force: true);
+                                await _clientService.Client.WriteJson(variable.Name + "." + p.Name, (JArray) p.Value, true);
                             else if (p.Value is JValue)
-                                await clientService.Client.WriteAsync(variable.Name + "." + p.Name, p.Value);
+                                await _clientService.Client.WriteAsync(variable.Name + "." + p.Name, p.Value);
                             else
                                 Logger.Error($"Unable to write variable '{variable.Name}.{p.Name}' from backup: no type case match!");
                         }

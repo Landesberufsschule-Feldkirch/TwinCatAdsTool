@@ -1,9 +1,6 @@
-﻿using System;
-using System.Linq;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using TwinCAT.PlcOpen;
-using TwinCAT.TypeSystem;
 using TwinCatAdsTool.Gui.ViewModels;
 
 namespace TwinCatAdsTool.Gui.Views

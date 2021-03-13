@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Reactive.Disposables;
 using System.Runtime.CompilerServices;
 using DynamicData.Annotations;
@@ -14,16 +13,16 @@ namespace TwinCatAdsTool.Gui.ViewModels
     public abstract class ViewModelBase : ReactiveObject, IDisposable, IInitializable
     {
         protected CompositeDisposable Disposables = new CompositeDisposable();
-        private bool disposed;
-        private string title;
+        private bool _disposed;
+        private string _title;
 
         public string Title
         {
-            get => title;
+            get => _title;
             set
             {
-                if (value == title) return;
-                title = value;
+                if (value == _title) return;
+                _title = value;
                 raisePropertyChanged();
             }
         }
@@ -40,7 +39,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
         [SuppressMessage("Microsoft.Usage", "CA2213:DisposableFieldsShouldBeDisposed", MessageId = "Disposables")]
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
             {
                 return;
             }
@@ -48,7 +47,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
             Disposables?.Dispose();
             Disposables = null;
 
-            disposed = true;
+            _disposed = true;
         }
 
         [NotifyPropertyChangedInvocator]

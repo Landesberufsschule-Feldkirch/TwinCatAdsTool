@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Reactive.Subjects;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace TwinCatAdsTool.Gui.Commands
 {
     public class ReactiveRelayCommand : ICommand
     {
-        private readonly Action<object> execute;
-        private readonly Predicate<object> canExecute;
+        private readonly Action<object> _execute;
+        private readonly Predicate<object> _canExecute;
 
         public ReactiveRelayCommand(Action<object> execute)
             : this(execute, null)
@@ -26,33 +22,30 @@ namespace TwinCatAdsTool.Gui.Commands
                 throw new ArgumentNullException("execute");
             }
 
-            this.execute = execute;
-            this.canExecute = canExecute;
+            _execute = execute;
+            _canExecute = canExecute;
         }
 
         [DebuggerStepThrough]
         public bool CanExecute(object parameter)
         {
-            return canExecute == null || canExecute(parameter);
+            return _canExecute == null || _canExecute(parameter);
         }
 
         public event EventHandler CanExecuteChanged
         {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
         }
 
         public void Execute(object parameter)
         {
-            execute(parameter);
-            executed.OnNext(parameter);
+            _execute(parameter);
+            _executed.OnNext(parameter);
         }
 
-        private readonly Subject<object> executed = new Subject<object>();
+        private readonly Subject<object> _executed = new Subject<object>();
 
-        public IObservable<object> Executed
-        {
-            get { return executed; }
-        }
+        public IObservable<object> Executed => _executed;
     }
 }

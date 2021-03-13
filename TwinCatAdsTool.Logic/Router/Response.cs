@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TwinCatAdsTool.Logic.Router
 {
     internal class Response
     {
-        readonly UdpClient client;
-        private int timeout;
+        private readonly UdpClient _client;
+        private readonly int _timeout;
 
         public Response(UdpClient client, int timeout = 10000)
         {
-            this.client = client;
-            this.timeout = timeout;
+            _client = client;
+            _timeout = timeout;
         }
 
         public async Task<List<ResponseResult>> ReceiveMultipleAsync()
@@ -28,17 +25,17 @@ namespace TwinCatAdsTool.Logic.Router
                 stopwatch.Reset();
                 stopwatch.Start();
                 
-                var worker = client.ReceiveAsync();
-                var task = await Task.WhenAny(worker, Task.Delay(timeout));
+                var worker = _client.ReceiveAsync();
+                var task = await Task.WhenAny(worker, Task.Delay(_timeout));
 
-                if (stopwatch.ElapsedMilliseconds < timeout && (task == worker))
+                if (stopwatch.ElapsedMilliseconds < _timeout && task == worker)
                 {
                     var udpResult = worker.Result;
                     results.Add(new ResponseResult(udpResult));
                 }
                 else
                 {
-                    client.Close();
+                    _client.Close();
                     break;
                 }
             }

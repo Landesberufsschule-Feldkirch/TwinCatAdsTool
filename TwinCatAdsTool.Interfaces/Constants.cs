@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace TwinCatAdsTool.Interfaces
+﻿namespace TwinCatAdsTool.Interfaces
 {
 	public static class Constants
 	{

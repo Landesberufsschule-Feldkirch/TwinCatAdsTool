@@ -5,9 +5,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using log4net;
-using log4net.Core;
 using Newtonsoft.Json.Linq;
-using TwinCAT;
 using TwinCAT.Ads;
 using TwinCAT.Ads.TypeSystem;
 using TwinCAT.JsonExtension;
@@ -21,8 +19,8 @@ namespace TwinCatAdsTool.Logic.Services
 {
     public class PersistentVariableService : IPersistentVariableService
     {
-        private readonly ILog logger =LoggerFactory.GetLogger();
-        private readonly Subject<string> currentTaskSubject = new Subject<string>();
+        private readonly ILog _logger =LoggerFactory.GetLogger();
+        private readonly Subject<string> _currentTaskSubject = new Subject<string>();
         public async Task<JObject> ReadPersistentVariables(TcAdsClient client, IInstanceCollection<ISymbol> symbols)
         {
             var jobj = new JObject();
@@ -45,22 +43,21 @@ namespace TwinCatAdsTool.Logic.Services
 
                         try
                         {
-                            logger.Debug($"reading symbol '{symbol.InstancePath}' in json format...");
-                            currentTaskSubject.OnNext($"Reading {symbol.InstancePath}...");
+                            _logger.Debug($"reading symbol '{symbol.InstancePath}' in json format...");
+                            _currentTaskSubject.OnNext($"Reading {symbol.InstancePath}...");
 
-                            var json = await client.ReadJson(symbol.InstancePath, force:true);
+                            var json = await client.ReadJson(symbol.InstancePath, true);
                             if(json.ContainsKey(localName))
                                 variables[globalName].Add(json);
                             else
                             {
-                                var innerObject = new JObject();
-                                innerObject.Add(localName, json);
+                                var innerObject = new JObject {{localName, json}};
                                 variables[globalName].Add(innerObject);
                             }
                         }
                         catch (Exception e)
                         {
-                            logger.Error(string.Format(Resources.ErrorDuringReadingVariable0InJsonFormat, symbol.InstancePath), e);
+                            _logger.Error(string.Format(Resources.ErrorDuringReadingVariable0InJsonFormat, symbol.InstancePath), e);
                         }
 
                     }
@@ -82,15 +79,15 @@ namespace TwinCatAdsTool.Logic.Services
             }
             catch (Exception e)
             {
-                logger.Error(Resources.ErrorWhileReadingPersistentVariables,e);
+                _logger.Error(Resources.ErrorWhileReadingPersistentVariables,e);
             }
             
-            currentTaskSubject.OnNext(string.Empty);
-            logger.Debug($"Persistent variable successfully downloaded!");
+            _currentTaskSubject.OnNext(string.Empty);
+            _logger.Debug($"Persistent variable successfully downloaded!");
 
             return jobj;
         }
 
-        public IObservable<string> CurrentTask => currentTaskSubject.AsObservable();
+        public IObservable<string> CurrentTask => _currentTaskSubject.AsObservable();
     }
 }

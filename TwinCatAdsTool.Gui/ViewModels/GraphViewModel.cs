@@ -4,57 +4,54 @@ using System.ComponentModel;
 using System.Reactive.Linq;
 using DynamicData;
 using System.Linq;
-using System.Reactive;
 using System.Reactive.Disposables;
-using System.Threading.Tasks;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Series;
-using ReactiveUI;
 using TwinCatAdsTool.Interfaces.Extensions;
 
 namespace TwinCatAdsTool.Gui.ViewModels
 {
     public class GraphViewModel : ViewModelBase
     {
-        readonly Dictionary<string, List<DataPoint>> dataPoints = new Dictionary<string, List<DataPoint>>();
+        private readonly Dictionary<string, List<DataPoint>> _dataPoints = new Dictionary<string, List<DataPoint>>();
 
-        private readonly SourceCache<SymbolObservationViewModel, string> symbolCache = new SourceCache<SymbolObservationViewModel, string>(x => x.Name);
-        private PlotModel plotModel;
-        private TimeSpan expiresAfter = TimeSpan.FromMinutes(10);
-        private bool pause = false;
+        private readonly SourceCache<SymbolObservationViewModel, string> _symbolCache = new SourceCache<SymbolObservationViewModel, string>(x => x.Name);
+        private PlotModel _plotModel;
+        private TimeSpan _expiresAfter = TimeSpan.FromMinutes(10);
+        private bool _pause = false;
 
 
         public TimeSpan ExpiresAfter {
-            get { return expiresAfter; }
+            get => _expiresAfter;
             set
             {
-                pause = true;
-                expiresAfter = value;
+                _pause = true;
+                _expiresAfter = value;
                 raisePropertyChanged();
-                pause = false;
+                _pause = false;
             }
         }
 
 
         public PlotModel PlotModel
         {
-            get { return plotModel; }
+            get => _plotModel;
             set
             {
-                plotModel = value;
+                _plotModel = value;
                 raisePropertyChanged();
             }
         }
 
-        private IObservableCache<SymbolObservationViewModel, string> SymbolCache => symbolCache.AsObservableCache();
+        private IObservableCache<SymbolObservationViewModel, string> SymbolCache => _symbolCache.AsObservableCache();
 
         public void AddSymbol(SymbolObservationViewModel symbol)
         {
             var symbolInLineSeries = PlotModel.Series.FirstOrDefault(series => series.Title == symbol.Name);
             if (symbolInLineSeries == null)
             {
-                symbolCache.AddOrUpdate(symbol);
+                _symbolCache.AddOrUpdate(symbol);
             }
         }
 
@@ -92,7 +89,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public void RemoveSymbol(SymbolObservationViewModel symbol)
         {
-            symbolCache.Remove(symbol.Name);
+            _symbolCache.Remove(symbol.Name);
 
             var seriesToRemove = PlotModel.Series.FirstOrDefault(series => series.Title == symbol.Name);
             if (seriesToRemove != null)
@@ -116,20 +113,20 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
             RescaleAxisDistances();
 
-            dataPoints[symbol.Name] = new List<DataPoint> {DateTimeAxis.CreateDataPoint(DateTime.Now, Convert.ToDouble(symbol.Value))};
+            _dataPoints[symbol.Name] = new List<DataPoint> {DateTimeAxis.CreateDataPoint(DateTime.Now, Convert.ToDouble(symbol.Value))};
 
 
             Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(
                     handler => handler.Invoke,
                     h => symbol.PropertyChanged += h,
                     h => symbol.PropertyChanged -= h)
-                .Where(args => args.EventArgs.PropertyName == "Value" && pause == false)
+                .Where(args => args.EventArgs.PropertyName == "Value" && _pause == false)
                 .ObserveOnDispatcher()
                 .Subscribe(x => { UpdateDatapoints(symbol); }).AddDisposableTo(disposable);
 
 
             Observable.Interval(TimeSpan.FromSeconds(1))
-                .Where(x => pause == false)
+                .Where(x => _pause == false)
                 .ObserveOnDispatcher()
                 .Subscribe(x => { UpdateLineseries(symbol, lineSeries); })
                 .AddDisposableTo(disposable);
@@ -145,11 +142,11 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         private void UpdateLineseries(SymbolObservationViewModel symbol, LineSeries lineSeries)
         {
-            var newPoints = dataPoints[symbol.Name]
+            var newPoints = _dataPoints[symbol.Name]
                 .Where(point => !lineSeries.Points.Select(oldPoint => oldPoint.X).Contains(point.X));
-            if (!newPoints.Any() && dataPoints[symbol.Name].Any())
+            if (!newPoints.Any() && _dataPoints[symbol.Name].Any())
             {
-                var lastPoint = dataPoints[symbol.Name].LastOrDefault();
+                var lastPoint = _dataPoints[symbol.Name].LastOrDefault();
                 newPoints = new[] {DateTimeAxis.CreateDataPoint(DateTime.Now, lastPoint.Y)};
             }
 
@@ -165,16 +162,15 @@ namespace TwinCatAdsTool.Gui.ViewModels
         private void UpdateDatapoints(SymbolObservationViewModel symbol)
         {
             var refreshTime = DateTime.Now;
-            dataPoints[symbol.Name].Add(DateTimeAxis.CreateDataPoint(refreshTime, Convert.ToDouble(symbol.Value)));
+            _dataPoints[symbol.Name].Add(DateTimeAxis.CreateDataPoint(refreshTime, Convert.ToDouble(symbol.Value)));
 
             var expireLimit = DateTimeAxis.ToDouble(DateTime.Now.Subtract(ExpiresAfter));
-            dataPoints[symbol.Name].RemoveAll(point => point.X < expireLimit);
+            _dataPoints[symbol.Name].RemoveAll(point => point.X < expireLimit);
         }
 
         private LineSeries CreateLineSeriesAndAxis(SymbolObservationViewModel symbol)
         {
-            var lineSeries = new LineSeries();
-            lineSeries.Title = symbol.Name;
+            var lineSeries = new LineSeries {Title = symbol.Name};
 
             var index = PlotModel.Axes.Count - 1;
 

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace TwinCatAdsTool.Gui.ViewModels
+﻿namespace TwinCatAdsTool.Gui.ViewModels
 {
     public class VariableViewModel
     {

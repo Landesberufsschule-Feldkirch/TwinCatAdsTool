@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reactive.Linq;
-using System.Linq;
 using System.Reactive;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,7 +18,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
     public abstract class SymbolObservationViewModel : ViewModelBase
     {
         protected readonly IClientService ClientService;
-        private ObservableAsPropertyHelper<object> helper;
+        private ObservableAsPropertyHelper<object> _helper;
 
         protected SymbolObservationViewModel(ISymbol model, IClientService clientService)
         {
@@ -35,7 +34,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
         public bool SuportsGraph => GetSupportsGraph();
         public bool SupportsSubmit => GetSupportsSubmit();
 
-        public object Value => helper.Value;
+        public object Value => _helper.Value;
 
         public override void Init()
         {
@@ -48,11 +47,11 @@ namespace TwinCatAdsTool.Gui.ViewModels
             var obsLogger = LoggerFactory.GetObserverLogger();
             
             observable
-                .Do(value => obsLogger.Debug($"{FullName} value changed to: '{value.ToString()}'"))
+                .Do(value => obsLogger.Debug($"{FullName} value changed to: '{value}'"))
                 .Subscribe()
                 .AddDisposableTo(Disposables);
             
-            helper = observable.ToProperty(this, m => m.Value);
+            _helper = observable.ToProperty(this, m => m.Value);
 
             CmdSubmit = ReactiveCommand.CreateFromTask(_ => SubmitSymbol())
                 .AddDisposableTo(Disposables);
@@ -87,7 +86,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
     public class SymbolObservationViewModel<T> : SymbolObservationViewModel
     {
-        private T newValue;
+        private T _newValue;
 
         public SymbolObservationViewModel(ISymbol model, IClientService clientService) : base(model, clientService)
         {
@@ -95,10 +94,10 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         public T NewValue
         {
-            get => newValue;
+            get => _newValue;
             set
             {
-                newValue = value;
+                _newValue = value;
                 raisePropertyChanged();
             }
         }
@@ -111,15 +110,15 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
         protected override bool GetSupportsGraph()
         {
-            return (typeof(T) == typeof(int))
-                || (typeof(T) == typeof(short))
-                || (typeof(T) == typeof(bool))
-                || (typeof(T) == typeof(float))
-                || (typeof(T) == typeof(double))
-                || (typeof(T) == typeof(byte))
-                || (typeof(T) == typeof(ushort))
-                || (typeof(T) == typeof(uint))
-                || (typeof(T) == typeof(sbyte));
+            return typeof(T) == typeof(int)
+                || typeof(T) == typeof(short)
+                || typeof(T) == typeof(bool)
+                || typeof(T) == typeof(float)
+                || typeof(T) == typeof(double)
+                || typeof(T) == typeof(byte)
+                || typeof(T) == typeof(ushort)
+                || typeof(T) == typeof(uint)
+                || typeof(T) == typeof(sbyte);
         }
 
         protected override bool GetSupportsSubmit()
@@ -145,7 +144,7 @@ namespace TwinCatAdsTool.Gui.ViewModels
 
             if (typeof(T) == typeof(string))
             {
-                Logger.Debug(string.Format(Resources.TryingToWriteTo0WithValue1, Model?.InstancePath, (value as string)));
+                Logger.Debug(string.Format(Resources.TryingToWriteTo0WithValue1, Model?.InstancePath, value as string));
                 ClientService.Client.WriteAnyString(variableHandle, value as string, (value as string).Length, Encoding.Default);
             }
             else
